@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useMemo, useState } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 // import { loadAll } from "@/tsparticles/all"; // if you are going to use `loadAll`, install the "@tsparticles/all" package too.
@@ -22,9 +23,9 @@ const ParticleComponent = () => {
     });
   }, []);
 
-  const particlesLoaded = (container) => {
-    console.log(container);
-  };
+  // const particlesLoaded = (container) => {
+  //   console.log(container);
+  // };
 
   const options = useMemo(
     () => ({
@@ -101,7 +102,7 @@ const ParticleComponent = () => {
       return (
         <Particles
           id="tsparticles"
-          particlesLoaded={particlesLoaded}
+          // particlesLoaded={particlesLoaded}
           options={options}
           className="particles-container"
         />
