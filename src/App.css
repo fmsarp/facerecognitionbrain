@@ -2,6 +2,16 @@
   text-align: center;
 }
 
+.bounding-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid #00ff00; /* Green color for the bounding box */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  cursor: pointer;
+}
+
 .center {
   display: flex;
   justify-content: center;
@@ -15,3 +25,4 @@
   left: 0;
   z-index: -1;
 }
+

@@ -1,54 +1,40 @@
+// Importing necessary components and styles
 import Navigation from "./components/Navigation/Navigation";
 import Logo from "./components/Logo/Logo";
 import ImageLinkForm from "./components/ImageLinkForm/ImageLinkForm";
 import Rank from "./components/Rank/Rank";
 import Particles from "./components/Particles/Particles";
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
+import Signin from "./components/Signin/Signin";
+import Register from "./components/Register/Register";
 import "./App.css";
 import { useState } from "react";
 
+
 export default function App() {
+
+  const [route, setRoute] = useState('Signin');
   const [input, setInput] = useState("");
   const [faceData, setFaceData] = useState([]);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  
 
-  const calculateFaceLocation = (data) => {
-    const clarifaiFace = data.outputs.data.regions.region_info.bounding_box;
-    const image = document.getElementById('inputimage');
-    const width = Number(image.width);
-    const height = Number(image.height);
 
-    console.log(clarifaiFace)
-
-    return {
-      leftCol: clarifaiFace.left_col * width,
-      topRow: clarifaiFace.top_row * height,
-      rightCol: width - (clarifaiFace.right_col * width),
-      bottomRow: height - (clarifaiFace.bottom_row * height)
-    }
-  }
-
-  const displayFaceBox = (faceData) => {
-
-    setFaceData({faceData})
-  }
-
-  function handleInputChange(event) {
+  // Handling input changes in the form
+  const handleInputChange = (event) => {
     setInput(event.target.value);
-  };
+  }
 
-
-  function onButtonSubmit() {
-    // Your PAT (Personal Access Token) can be found in the portal under Authentification
-    const PAT = ***;
-    // Specify the correct user_id/app_id pairings
-    // Since you're making inferences outside your app's scope
+  // Handling button submission
+  const onButtonSubmit = () => {
+    // Personal Access Token (PAT) for authentication
+    const PAT = '***';
     const USER_ID = 'fmsarp';
     const APP_ID = 'Devtest';
-    // Change these to whatever model and image URL you want to use
     const MODEL_ID = 'face-detection';
-    const MODEL_VERSION_ID = '6dc7e46bc9124c5c8824be4822abe105';
     const IMAGE_URL = input;
 
+    // Creating a JSON payload for the Clarifai API
     const raw = JSON.stringify({
       "user_app_id": {
         "user_id": USER_ID,
@@ -59,65 +45,84 @@ export default function App() {
           "data": {
             "image": {
               "url": IMAGE_URL
-              // "base64": IMAGE_BYTES_STRING
             }
           }
         }
       ]
     });
 
+    // Configuring the options for the API request
     const requestOptions = {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Key ' + PAT
+        'Authorization': 'Key ' + PAT,
+        'Content-Type': 'application/json', // Specifying JSON content type
       },
       body: raw
     };
 
-    fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/versions/" + MODEL_VERSION_ID + "/outputs", requestOptions)
+    // Making a fetch request to the Clarifai API
+    fetch(`https://api.clarifai.com/v2/models/${MODEL_ID}/outputs`, requestOptions)
       .then(response => response.json())
       .then(result => {
-
+        // Extracting information about detected regions in the image
         const regions = result.outputs[0].data.regions;
 
-        const newfaceData = regions.map(region => {
+        const faceData = regions.map(region => {
           const boundingBox = region.region_info.bounding_box;
+          const width = Number(document.getElementById('inputimage').width);
+          const height = Number(document.getElementById('inputimage').height);
+  
           return {
-            boundingBox: {
-              topRow: boundingBox.top_row,
-              leftCol: boundingBox.left_col,
-              bottomRow: boundingBox.bottom_row,
-              rightCol: boundingBox.right_col,
-            },
-            concepts: region.data.concepts,
+            topRow: boundingBox.top_row * height,
+            leftCol: boundingBox.left_col * width,
+            bottomRow: height - boundingBox.bottom_row * height,
+            rightCol: width - boundingBox.right_col * width,
           };
         });
 
-        calculateFaceLocation(newfaceData)
-
-        displayFaceBox()
-
-        // setFaceData(newfaceData);
-
-        // Set the face data to state or pass it directly to FaceRecognition component
-        // e.g., setFaceData(faceData);
-        // or
-        // <FaceRecognition input={input} faceData={faceData} />
-
+        setFaceData(faceData);
       })
       .catch(error => console.log('error', error));
-
   }
 
+  
+  const onRouteChange = (newRoute) => {
+    if (newRoute === 'Signout') {
+      setIsSignedIn(true);
+    } else if (newRoute === 'Home') {
+      setIsSignedIn(false);
+    }
+    setRoute(newRoute);
+    console.log(newRoute)
+  };
+  
+
+
+  // Rendering the main App component
   return (
     <div className="App">
       <Particles className="particles" />
-      <Navigation />
-      <Logo />
-      <Rank />
-      <ImageLinkForm onInputChange={handleInputChange} onButtonSubmit={onButtonSubmit} />
-      <FaceRecognition input={input} faceData={faceData} />
+      <Navigation isSignedIn={isSignedIn} onRouteChange={() => onRouteChange('Home')}/>  
+      
+      {route === 'Home'
+      ? (
+        <div>
+          <Logo />
+          <Rank />
+          <ImageLinkForm onInputChange={handleInputChange} onButtonSubmit={onButtonSubmit} />
+          <FaceRecognition input={input} faceData={faceData} />
+        </div>
+      ) : (
+        route === 'Signin' 
+        ? <Signin onRouteChange={() => onRouteChange('Home')}/>
+        : <Register onRouteChange={() => onRouteChange('Register')}/>   
+      )}
+      
     </div>
+
+    
   );
+  
 }
